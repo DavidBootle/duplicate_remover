@@ -63,5 +63,9 @@ if __name__ == '__main__':
     source_path = args.path
     
     # run app
-    App = DuplicateRemover(source_path, no_inputs=args.no_inputs, generate_logs=(not args.quiet), log_path=args.output)
+    App = DuplicateRemover(
+        source_path,
+        no_inputs=args.no_inputs,
+        generate_logs=(not args.quiet),
+        log_path=args.output)
     App.welcome()
