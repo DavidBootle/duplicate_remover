@@ -11,7 +11,7 @@ colorama.init()
 
 class DuplicateRemover:
 
-    def __init__(self, source_path: str, no_inputs = False, generate_logs = False, log_path = None, verbose = False, passive=False):
+    def __init__(self, source_path: str, no_inputs = False, generate_logs = False, log_path = None, verbose = False, passive=False, prune_folders = False):
         # log_path stuff
         log_path_set = True if log_path else False
         if not log_path:
@@ -32,6 +32,7 @@ class DuplicateRemover:
         self.hashes = {}
         self.num_of_duplicates = 0
         self.num_scanned = 0
+        self.num_of_folders_pruned = 0
 
         ## config properties
         self.no_inputs = no_inputs
@@ -40,6 +41,7 @@ class DuplicateRemover:
         self.log_path_set = log_path_set
         self.is_verbose = verbose
         self.passive = passive
+        self.to_prune_folders = prune_folders
     
     def verbose(self, *args, **kwargs):
         if self.is_verbose:
@@ -51,18 +53,42 @@ class DuplicateRemover:
     def error(self, *args, **kwargs):
         print(f'{Fore.RED}{Style.BRIGHT}[ERROR]{Fore.RESET}{Style.RESET_ALL}', *args, **kwargs)
 
+    def print_config(self):
+        print(f"{Style.BRIGHT}Settings:{Style.RESET_ALL}")
+        if self.generate_logs:
+                if self.log_path_set or self.is_verbose:
+                    print(f"- {Style.DIM}Log file:{Style.RESET_ALL} {Style.BRIGHT + str(self.log_path) + Style.RESET_ALL}")
+                else:
+                    print(f"- {Style.DIM}Log file:{Style.RESET_ALL} {Style.BRIGHT + self.log_path.name + Style.RESET_ALL}")
+        else:
+            print(f"- {Fore.RED}No log{Fore.RESET}")
+        if self.is_verbose:
+            print(f"- {Fore.CYAN}Increased verbosity{Fore.RESET}")
+        if self.no_inputs:
+            print(f"- {Fore.YELLOW}Skip inputs{Fore.RESET}")
+        if self.passive:
+            print(f"- {Fore.MAGENTA}Passive (no files will be deleted){Fore.RESET}")
+        else:
+            print(f"- {Fore.RED}Duplicates will be deleted{Fore.RESET}")
+        if self.to_prune_folders:
+            print(f"- {Fore.RED}Prune folders (Empty folders will be deleted){Fore.RESET}")
+        else:
+            print(f"- {Fore.BLUE}Empty folders will be left intact{Fore.RESET}")
+
     def welcome(self):
         print()
         print('***********************************')
         print(f'***      {Fore.BLUE}DUPLICATE REMOVER{Fore.RESET}      ***')
         print('***********************************')
         print()
-        print(f"RECURSIVE CLEAN ON PATH: {Style.BRIGHT + str(self.source_path) + Style.RESET_ALL}")
+        print(f"RECURSIVE SCAN ON PATH: {Style.BRIGHT + str(self.source_path) + Style.RESET_ALL}")
+        print()
+        self.print_config()
 
         if not self.no_inputs:
             while True:
                 print()
-                answer = str.lower(input('Perform recursive clean? (Y/n):'))
+                answer = str.lower(input('Continue? (Y/n):'))
                 if answer == 'y':
                     break
                 elif answer == 'n':
@@ -72,12 +98,7 @@ class DuplicateRemover:
                     print('Invalid option.')
 
         print()
-        if self.generate_logs:
-                if self.log_path_set or self.is_verbose:
-                    print(f"Log file location: {Style.BRIGHT + str(self.log_path) + Style.RESET_ALL}")
-                else:
-                    print(f"Log file location: {Style.BRIGHT + self.log_path.name + Style.RESET_ALL}")
-        print(Style.BRIGHT + Fore.GREEN + 'Starting clean... (this may take a while)' + Style.RESET_ALL + Fore.RESET)
+        print(Style.BRIGHT + Fore.GREEN + 'Starting scan... (this may take a while)' + Style.RESET_ALL + Fore.RESET)
         print()
 
     def log(self, *args):
@@ -92,7 +113,7 @@ class DuplicateRemover:
     def create_log_file(self):
         if self.generate_logs:
             try:
-                if self.log_path.exists:
+                if self.log_path.exists():
                     self.log_path.unlink()
                 self.log_path.touch()
                 self.verbose(f'Created log file at {str(self.log_path)}.')
@@ -149,10 +170,42 @@ class DuplicateRemover:
             else:
                 self.hashes[hash] = str(filepath)
             self.num_scanned += 1
+    
+    def prune_folders(self):
+        if not self.to_prune_folders:
+            return
 
+        # update log
+        self.log('', 'Pruned directories:')
+
+        num_of_pruned_folders = 1
+        while num_of_pruned_folders != 0:
+            num_of_pruned_folders = 0
+            self.verbose('Pruning empty folders...')
+            self.verbose('Getting all directories recursively...')
+            directories = sorted(self.source_path.glob('**/'))
+            self.verbose('Completed.')
+
+            num_of_folders = len(directories)
+
+            for index, directory in enumerate(directories):
+                self.verbose(f'Scanning directory {str(index)} of {str(num_of_folders)}.')
+                if not any(directory.iterdir()): # returns true if the directory is empty
+                    self.verbose(f'Directory {str(directory)} is empty.')
+                    directory.rmdir()
+                    self.log(str(directory))
+                    self.num_of_folders_pruned += 1
+                    num_of_pruned_folders += 1
+            
+            self.verbose(f'Scanning iteration complete. Pruned {str(num_of_pruned_folders)} folders this iteration.')
+
+
+    def complete(self):
         print(Fore.GREEN + 'Scan completed.' + Fore.RESET)
         print('Number of files scanned:', Fore.CYAN + str(self.num_scanned) + Fore.RESET)
         print('Number of duplicates:', Fore.RED + str(self.num_of_duplicates) + Fore.RESET)
+        if not self.passive:
+            print('Number of pruned folders:', Fore.YELLOW + str(self.num_of_folders_pruned) + Fore.RESET)
     
 if __name__ == '__main__':
     # setup argparse
@@ -163,6 +216,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', help="the path of the log output file", type=str)
     parser.add_argument('-v', '--verbose', help="increase output verbosity", action="store_true")
     parser.add_argument('-p', '--passive', help="operate normally, but do not delete duplicates", action="store_true")
+    parser.add_argument('-x', '--prune-folders', help="prune empty folders once duplicates are removed", action="store_true")
     args = parser.parse_args()
 
     source_path = args.path
@@ -174,7 +228,10 @@ if __name__ == '__main__':
         generate_logs=(not args.quiet),
         log_path=args.output,
         verbose=args.verbose,
-        passive=args.passive)
+        passive=args.passive,
+        prune_folders=args.prune_folders)
     App.welcome()
     App.create_log_file()
     App.clean()
+    App.prune_folders()
+    App.complete()
