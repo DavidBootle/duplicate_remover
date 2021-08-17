@@ -57,7 +57,7 @@ class DuplicateRemover:
 
         print()
         if self.generate_logs:
-                if self.log_path_set or self.verbose:
+                if self.log_path_set or self.is_verbose:
                     print(f"Log file location: {str(self.log_path)}")
                 else:
                     print(f"Log file location: {self.log_path.name}")
@@ -66,6 +66,8 @@ class DuplicateRemover:
     
     def create_log_file(self):
         try:
+            if self.log_path.exists:
+                self.log_path.unlink()
             self.log_path.touch()
             self.verbose(f'Created log file at {str(self.log_path)}.')
         except FileNotFoundError:
