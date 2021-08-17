@@ -2,6 +2,11 @@ import argparse
 import sys
 from pathlib import Path
 import time
+import colorama
+from colorama import Fore, Back, Style
+from hashlib import sha256
+
+colorama.init()
 
 class DuplicateRemover:
 
@@ -18,11 +23,13 @@ class DuplicateRemover:
 
         # validate source path
         if not source_path_obj.is_dir():
-            print(f"Path '{str(source_path_obj)}' is not a valid directory.")
+            self.error(f"Path '{Style.BRIGHT + str(source_path_obj) + Style.RESET_ALL}' is not a valid directory.")
             sys.exit()
 
-        # set properties
+        # properties
         self.source_path = source_path_obj
+        self.hashes = {}
+        self.num_of_duplicates = 0
 
         ## config properties
         self.no_inputs = no_inputs
@@ -33,15 +40,21 @@ class DuplicateRemover:
     
     def verbose(self, *args, **kwargs):
         if self.is_verbose:
-            print(*args, **kwargs)
+            print(f'{Fore.CYAN}{Style.DIM}[VERBOSE]{Fore.RESET}', *args, Style.RESET_ALL, **kwargs)
+    
+    def warning(self, *args, **kwargs):
+        print(f'{Fore.YELLOW}{Style.BRIGHT}[WARNING]{Fore.RESET}{Style.RESET_ALL}', *args, **kwargs)
+    
+    def error(self, *args, **kwargs):
+        print(f'{Fore.RED}{Style.BRIGHT}[ERROR]{Fore.RESET}{Style.RESET_ALL}', *args, **kwargs)
 
     def welcome(self):
         print()
         print('***********************************')
-        print('***      DUPLICATE REMOVER      ***')
+        print(f'***      {Fore.BLUE}DUPLICATE REMOVER{Fore.RESET}      ***')
         print('***********************************')
         print()
-        print(f"RECURSIVE CLEAN ON PATH '{str(self.source_path)}'")
+        print(f"RECURSIVE CLEAN ON PATH: {Style.BRIGHT + str(self.source_path) + Style.RESET_ALL}")
 
         if not self.no_inputs:
             while True:
@@ -58,10 +71,10 @@ class DuplicateRemover:
         print()
         if self.generate_logs:
                 if self.log_path_set or self.is_verbose:
-                    print(f"Log file location: {str(self.log_path)}")
+                    print(f"Log file location: {Style.BRIGHT + str(self.log_path) + Style.RESET_ALL}")
                 else:
-                    print(f"Log file location: {self.log_path.name}")
-        print('Starting clean...')
+                    print(f"Log file location: {Style.BRIGHT + self.log_path.name + Style.RESET_ALL}")
+        print(Style.BRIGHT + Fore.GREEN + 'Starting clean...' + Style.RESET_ALL + Fore.RESET)
         print()
     
     def create_log_file(self):
@@ -71,7 +84,7 @@ class DuplicateRemover:
             self.log_path.touch()
             self.verbose(f'Created log file at {str(self.log_path)}.')
         except FileNotFoundError:
-            print('[WARNING] Failed to create log file.')
+            self.warning('Failed to create log file.')
     
 if __name__ == '__main__':
     # setup argparse
