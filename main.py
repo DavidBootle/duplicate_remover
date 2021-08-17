@@ -80,24 +80,26 @@ class DuplicateRemover:
         print()
 
     def log(self, *args):
-        try:
-            with self.log_path.open('a') as log_file:
-                for line in args:
-                    log_file.writelines(line + '\n')
-        except:
-            self.error('Failed to write to log.')
+        if self.generate_logs:
+            try:
+                with self.log_path.open('a') as log_file:
+                    for line in args:
+                        log_file.writelines(line + '\n')
+            except:
+                self.error('Failed to write to log.')
     
     def create_log_file(self):
-        try:
-            if self.log_path.exists:
-                self.log_path.unlink()
-            self.log_path.touch()
-            self.verbose(f'Created log file at {str(self.log_path)}.')
+        if self.generate_logs:
+            try:
+                if self.log_path.exists:
+                    self.log_path.unlink()
+                self.log_path.touch()
+                self.verbose(f'Created log file at {str(self.log_path)}.')
 
-            self.log('Duplicates:')
-        except FileNotFoundError:
-            self.error('Failed to create log file.')
-            sys.exit()
+                self.log('Duplicates:')
+            except FileNotFoundError:
+                self.error('Failed to create log file.')
+                sys.exit()
     
     def hash(self, filepath):
         filehash = sha256()
@@ -137,7 +139,7 @@ class DuplicateRemover:
                 # file is a duplicate, handle as such
                 self.verbose(f'File {str(filepath)} is a duplicate of {self.hashes[hash]}. Removing.')
                 try:
-                    filepath.unlink()
+                    #filepath.unlink()
                     self.num_of_duplicates += 1
                     self.log(f'"{str(filepath)}" is a duplicate of "{self.hashes[hash]}"')
                 except:
