@@ -6,7 +6,7 @@ import time
 class DuplicateRemover:
 
     def __init__(self, source_path: str, no_inputs = False, generate_logs = False, log_path = None, verbose = False):
-        # validate
+        # log_path stuff
         log_path_set = True if log_path else False
         if not log_path:
             log_path = 'log.txt'
@@ -14,10 +14,15 @@ class DuplicateRemover:
         # setup source_path and log_path
         log_path_obj = Path.cwd() / log_path
         log_path_obj = log_path_obj.resolve()
-        source_path = Path(source_path).resolve()
+        source_path_obj = Path(source_path).resolve()
+
+        # validate source path
+        if not source_path_obj.is_dir():
+            print(f"Path '{str(source_path_obj)}' is not a valid directory.")
+            sys.exit()
 
         # set properties
-        self.source_path = source_path
+        self.source_path = source_path_obj
 
         ## config properties
         self.no_inputs = no_inputs
