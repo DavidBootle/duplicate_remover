@@ -29,7 +29,11 @@ class DuplicateRemover:
         self.generate_logs = generate_logs
         self.log_path = log_path_obj
         self.log_path_set = log_path_set
-        self.verbose = verbose
+        self.is_verbose = verbose
+    
+    def verbose(self, *args, **kwargs):
+        if self.is_verbose:
+            print(*args, **kwargs)
 
     def welcome(self):
         print()
@@ -53,11 +57,19 @@ class DuplicateRemover:
 
         print()
         if self.generate_logs:
-            if self.log_path_set or self.verbose:
-                print(f"Log file location: {str(self.log_path)}")
-            else:
-                print(f"Log file location: {self.log_path.name}")
+                if self.log_path_set or self.verbose:
+                    print(f"Log file location: {str(self.log_path)}")
+                else:
+                    print(f"Log file location: {self.log_path.name}")
         print('Starting clean...')
+        print()
+    
+    def create_log_file(self):
+        try:
+            self.log_path.touch()
+            self.verbose(f'Created log file at {str(self.log_path)}.')
+        except FileNotFoundError:
+            print('[WARNING] Failed to create log file.')
     
 if __name__ == '__main__':
     # setup argparse
@@ -79,3 +91,4 @@ if __name__ == '__main__':
         log_path=args.output,
         verbose=args.verbose)
     App.welcome()
+    App.create_log_file()
