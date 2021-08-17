@@ -14,6 +14,7 @@ class DuplicateRemover:
         # setup source_path and log_path
         log_path_obj = Path.cwd() / log_path
         log_path_obj = log_path_obj.resolve()
+        source_path = Path(source_path).resolve()
 
         # set properties
         self.source_path = source_path
@@ -30,7 +31,7 @@ class DuplicateRemover:
         print('***      DUPLICATE REMOVER      ***')
         print('***********************************')
         print()
-        print(f"RECURSIVE CLEAN ON PATH '{self.source_path}'")
+        print(f"RECURSIVE CLEAN ON PATH '{str(self.source_path)}'")
 
         if not self.config['no_inputs']:
             while True:
