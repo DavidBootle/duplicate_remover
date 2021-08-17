@@ -48,7 +48,7 @@ class DuplicateRemover:
 
         print()
         if self.generate_logs:
-            if self.log_path_set:
+            if self.log_path_set or self.verbose:
                 print(f"Log file location: {str(self.log_path)}")
             else:
                 print(f"Log file location: {self.log_path.name}")
