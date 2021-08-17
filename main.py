@@ -11,7 +11,7 @@ colorama.init()
 
 class DuplicateRemover:
 
-    def __init__(self, source_path: str, no_inputs = False, generate_logs = False, log_path = None, verbose = False):
+    def __init__(self, source_path: str, no_inputs = False, generate_logs = False, log_path = None, verbose = False, passive=False):
         # log_path stuff
         log_path_set = True if log_path else False
         if not log_path:
@@ -39,6 +39,7 @@ class DuplicateRemover:
         self.log_path = log_path_obj
         self.log_path_set = log_path_set
         self.is_verbose = verbose
+        self.passive = passive
     
     def verbose(self, *args, **kwargs):
         if self.is_verbose:
@@ -137,9 +138,10 @@ class DuplicateRemover:
             
             if hash in self.hashes.keys():
                 # file is a duplicate, handle as such
-                self.verbose(f'File {str(filepath)} is a duplicate of {self.hashes[hash]}. Removing.')
+                self.verbose(f'File {str(filepath)} is a duplicate of {self.hashes[hash]}.')
                 try:
-                    #filepath.unlink()
+                    if not self.passive:
+                        filepath.unlink()
                     self.num_of_duplicates += 1
                     self.log(f'"{str(filepath)}" is a duplicate of "{self.hashes[hash]}"')
                 except:
@@ -160,6 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('-q', '--quiet', help="the app will not generate log files", action="store_true")
     parser.add_argument('-o', '--output', help="the path of the log output file", type=str)
     parser.add_argument('-v', '--verbose', help="increase output verbosity", action="store_true")
+    parser.add_argument('-p', '--passive', help="operate normally, but do not delete duplicates", action="store_true")
     args = parser.parse_args()
 
     source_path = args.path
@@ -170,7 +173,8 @@ if __name__ == '__main__':
         no_inputs=args.no_inputs,
         generate_logs=(not args.quiet),
         log_path=args.output,
-        verbose=args.verbose)
+        verbose=args.verbose,
+        passive=args.passive)
     App.welcome()
     App.create_log_file()
     App.clean()
