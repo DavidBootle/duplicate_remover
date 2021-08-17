@@ -18,12 +18,10 @@ class DuplicateRemover:
 
         # set properties
         self.source_path = source_path
-        self.config = {
-            'no_inputs': no_inputs,
-            'generate_logs': generate_logs,
-            'log_path': log_path_obj,
-            'log_path_set': log_path_set,
-        }
+        self.no_inputs = no_inputs
+        self.generate_logs = generate_logs
+        self.log_path = log_path_obj
+        self.log_path_set = log_path_set
 
     def welcome(self):
         print()
@@ -33,7 +31,7 @@ class DuplicateRemover:
         print()
         print(f"RECURSIVE CLEAN ON PATH '{str(self.source_path)}'")
 
-        if not self.config['no_inputs']:
+        if not self.no_inputs:
             while True:
                 print()
                 answer = str.lower(input('Perform recursive clean? (Y/n):'))
@@ -46,11 +44,11 @@ class DuplicateRemover:
                     print('Invalid option.')
 
         print()
-        if self.config['generate_logs']:
-            if self.config['log_path_set']:
-                print(f"Log file location: {str(self.config['log_path'])}")
+        if self.generate_logs:
+            if self.log_path_set:
+                print(f"Log file location: {str(self.log_path)}")
             else:
-                print(f"Log file location: {self.config['log_path'].name}")
+                print(f"Log file location: {self.log_path.name}")
         print('Starting clean...')
     
 if __name__ == '__main__':
